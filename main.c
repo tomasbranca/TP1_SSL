@@ -90,7 +90,7 @@ int esProduccionValida(gramatica *g, char *ladoDer){
 
   // Caso: producción vacía
   // Si la producción está vacía, no es válida.
-  if (len < 1) {
+  if (len == 0) {
     printf("Produccion no valida: esta vacia. Si queria referirse a un no terminal vacio, puede usar 'e' (para representar 'ε').\n");
     return 0;
   }
@@ -118,43 +118,25 @@ int esProduccionValida(gramatica *g, char *ladoDer){
   // - Si el primero es un terminal, el segundo debe ser un no terminal.
   // - Si el primero es un no terminal, el segundo debe ser un terminal.
   // Retorna 1 si la producción cumple con la forma de una gramática regular.
-  if (len == 2) {
     // No se permite el símbolo vacío en producciones con dos símbolos
-    if (ladoDer[0] == 'e' || ladoDer[1] == 'e') {
-      printf("Produccion no valida: no se permite el simbolo vacio en producciones con dos simbolos.\n");
-      return 0;
-    }
-    if (estaEnLaLista(g->VT, ladoDer[0])) {
-      // Si el primer símbolo es un terminal, verifica que el segundo sea un no terminal o el símbolo vacío
-      if (!estaEnLaLista(g->VN, ladoDer[1])) {
-        printf("Produccion no valida: segundo simbolo '%c' no es un no terminal valido.\n", ladoDer[1]); // Verifica que el segundo símbolo sea un no terminal
-        return 0;
-      }
-    } else if (estaEnLaLista(g->VN, ladoDer[0])) {
-      // Si el primer símbolo es un no terminal, verifica que el segundo sea un terminal
-      if (!estaEnLaLista(g->VT, ladoDer[1])) {
-        printf("Produccion no valida: segundo simbolo '%c' no es un terminal valido.\n", ladoDer[1]);
-        return 0;
-      }
-    } else {
-      printf("Produccion no valida: simbolos '%c%c' no son validos.\n", ladoDer[0], ladoDer[1]);
-      return 0;
-    }
-    return 1;
+  if (ladoDer[0] == 'e' || ladoDer[1] == 'e' || strcmp(ladoDer, "e") == 0) {
+    printf("Produccion no valida: no se permite el simbolo vacio en producciones con dos simbolos.\n");
+    return 0;
   }
-  // Si no cae en ningún caso, no es válida
-  printf("Produccion no valida: formato incorrecto.\n");
+  else if (estaEnLaLista(g->VT, ladoDer[0]) && estaEnLaLista(g->VN, ladoDer[1])) return 1;
+  else if (estaEnLaLista(g->VN, ladoDer[0]) && estaEnLaLista(g->VT, ladoDer[1])) return 1;
+  
+  printf("Produccion '%c%c' no valida: Debe ser T + NT o NT + T.\n", ladoDer[0], ladoDer[1]);
   return 0;
 }
 
 void cargarProducciones(gramatica *g){
-  int i = 0, termino = 0;
+  int i = 0;
   char continuar = 's';
   char noTerminal;
-  char ladoDer[2 + 1];
   char inputProduccion[100 + 1]; // para toda la línea con '|'
 
-  while (i < MAX_PRODUCCIONES && !termino){
+  while (i < MAX_PRODUCCIONES && (continuar == 's' || continuar == 'S')){
     printf("NO TERMINALES: %s\n", g->VN);
     printf("Ingrese el NO TERMINAL de la produccion %d: ", i + 1);
     scanf(" %c", &noTerminal);
@@ -166,9 +148,7 @@ void cargarProducciones(gramatica *g){
       scanf(" %c", &noTerminal);
     }
 
-    if (i == 0){
-      g->axioma = noTerminal; // El primer NO TERMINAL es el axioma
-    }
+    if (i == 0) g->axioma = noTerminal; // El primer NO TERMINAL es el axioma
 
     limpiarConsola();
 
@@ -201,9 +181,6 @@ void cargarProducciones(gramatica *g){
 
     printf("Desea ingresar otra produccion? (s/n): ");
     scanf(" %c", &continuar);
-    if (continuar != 's' && continuar != 'S'){
-      termino = 1;
-    }
 
     limpiarConsola();
   }
