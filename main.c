@@ -20,6 +20,7 @@ typedef struct{
 } gramatica;
 
 // Prototipos de funciones
+void inicializarGramatica(gramatica *g);
 int estaEnLaLista(char *lista, char simbolo);
 void cargarVariables(gramatica *g);
 int esSimboloValido(char *N, char *T, char simbolo);
@@ -30,6 +31,7 @@ void limpiarConsola();
 
 int main(){
   gramatica g;
+  inicializarGramatica(&g);
   cargarVariables(&g); 
   limpiarConsola(); // Limpiar pantalla
   cargarProducciones(&g);
@@ -43,6 +45,13 @@ int main(){
   getchar(); 
   getchar(); // Espera a que el usuario presione ENTER
   return 0;
+}
+
+void inicializarGramatica(gramatica *g) {
+    for (int i = 0; i < MAX_PRODUCCIONES; i++) {
+        g->producciones[i].ladoIzq = '\0';
+        g->producciones[i].ladoDer[0] = '\0';
+    }
 }
 
 // Funcion para verificar si un simbolo esta en una lista
