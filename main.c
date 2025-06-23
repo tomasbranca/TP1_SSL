@@ -251,18 +251,22 @@ int contarProducciones(gramatica *g) {
 }
 
 int produccionEncontrada (gramatica *g, char noTerminal, produccion *produc){
-  int cantidadProducciones = contarProducciones(g);
-  int intentos = 0; // Limita el número de intentos para evitar bucles infinitos
-  int maxIntentos = cantidadProducciones * 2; // Máximo de intentos permitidos
+  produccion candidatas[MAX_PRODUCCIONES];
+  int cantidad = 0;
 
-  while (intentos < maxIntentos) {
-    int random = rand() % cantidadProducciones;
-    *produc = g->producciones[random];
-    if (produc->ladoIzq == noTerminal) return 1; // Producción encontrada
-    intentos++;
+  // Buscar todas las producciones que tienen como lado izquierdo el no terminal dado
+  for (int i = 0; i < MAX_PRODUCCIONES; i++) {
+    if (g->producciones[i].ladoIzq == noTerminal) {
+      candidatas[cantidad++] = g->producciones[i];
+    }
   }
 
-  return 0; // Produccion no encontrada
+  if (cantidad == 0) return 0; // No hay producciones validas
+
+  // Elegir una al azar entre las candidatas
+  int seleccion = rand() % cantidad;
+  *produc = candidatas[seleccion];
+  return 1;
 }
 
 // Agrega una letra al principio o al final de la palabra, según forma regular
@@ -315,7 +319,7 @@ void generarProduccion(gramatica *g) {
     printf("Palabra Antes: %s\n", palabra);
     printf("Elemento Agregado: %c (por %c -> %s)\n", letra[0], produccion.ladoIzq, produccion.ladoDer);
     agregarLetra(palabra, letra[0], g->formaRegular); // Agrega la letra al principio o al final según la forma regular
-    printf("Palabra Despues: %s\n", palabra);
+    printf("Palabra Despues: %s\n\n", palabra);
 
     char noTerminal;
 
@@ -333,5 +337,5 @@ void generarProduccion(gramatica *g) {
   agregarLetra(palabra, letra[0], g->formaRegular); // Agrega la letra final
   printf("Palabra Despues: %s\n\n", palabra);
 
-  printf("Palabra Final Generada: %s\n", palabra);
+  printf("PALABRA FINAL GENERADA: %s\n", palabra);
 }
