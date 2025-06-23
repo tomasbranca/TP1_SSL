@@ -33,6 +33,7 @@ void imprimirCuatrupla(gramatica *g);
 void limpiarConsola();
 int contarProducciones(gramatica *g);
 int produccionEncontrada (gramatica *g, char noTerminal, produccion *produc);
+void agregarLetra(char *palabra, char letra, int formaRegular);
 void generarProduccion(gramatica *g);
 
 int main() {
@@ -83,9 +84,7 @@ void limpiarConsola() {
 // Retorna 1 si está, 0 en caso contrario.
 int estaEnLaLista(char *lista, char simbolo) {
   for (int i = 0; i < strlen(lista); i++) {
-    if (lista[i] == simbolo) {
-      return 1;
-    }
+    if (lista[i] == simbolo) return 1;
   }
   return 0;
 }
@@ -119,8 +118,7 @@ int esProduccionValida(gramatica *g, char *ladoDer) {
   // Si la producción tiene un solo símbolo, verifica si es un terminal o el símbolo vacío.
   if (len == 1) {
     char c = ladoDer[0];
-    if (c == 'e')
-      return 1; // Si es el símbolo vacío, es válido
+    if (c == 'e') return 1; // Si es el símbolo vacío, es válido
     else if (!estaEnLaLista(g->VT, c)) {
       printf("Produccion no valida: simbolo '%c' no es un terminal valido.\n", c);
       return 0;
@@ -140,8 +138,7 @@ int esProduccionValida(gramatica *g, char *ladoDer) {
   int esT2 = estaEnLaLista(g->VT, ladoDer[1]);
   int esNT2 = estaEnLaLista(g->VN, ladoDer[1]);
 
-  if (esT1 && esNT2 && g->formaRegular == 1) return 1; // T + NT derecha
-  if (esNT1 && esT2 && g->formaRegular == 2) return 1; // NT + T izquierda
+  if ((esT1 && esNT2 && g->formaRegular == 1) || (esNT1 && esT2 && g->formaRegular == 2)) return 1;
 
   printf("Produccion '%s' no valida para forma regular seleccionada.\n", ladoDer);
   return 0;
@@ -157,8 +154,8 @@ void cargarProducciones(gramatica *g) {
     printf("Ingrese el tipo de gramatica regular (1: Regular a la derecha, 2: Regular a la izquierda): ");
     scanf("%d", &g->formaRegular);
     while (g->formaRegular < 1 || g->formaRegular > 2) {
-        printf("Tipo de gramatica invalido. Ingrese 1 o 2: ");
-        scanf("%d", &g->formaRegular);
+      printf("Tipo de gramatica invalido. Ingrese 1 o 2: ");
+      scanf("%d", &g->formaRegular);
     }
   }
 
@@ -176,8 +173,7 @@ void cargarProducciones(gramatica *g) {
       scanf(" %c", &noTerminal);
     }
 
-    if (i == 0)
-      g->axioma = noTerminal; // El primer NO TERMINAL es el axioma
+    if (i == 0) g->axioma = noTerminal; // El primer NO TERMINAL es el axioma
 
     limpiarConsola();
 
@@ -189,11 +185,9 @@ void cargarProducciones(gramatica *g) {
 
     char *token = strtok(inputProduccion, "|");
     while (token && i < MAX_PRODUCCIONES) {
-      if (strlen(token) > 2) {
-        printf("Produccion '%s' demasiado larga (max. 2 caracteres para gramatica regular).\n", token);
-      } else if (!esProduccionValida(g, token)) {
-        printf("Produccion '%s' no valida. Se descartara.\n", token);
-      } else {
+      if (strlen(token) > 2) printf("Produccion '%s' demasiado larga (max. 2 caracteres para gramatica regular).\n", token);
+      else if (!esProduccionValida(g, token)) printf("Produccion '%s' no valida. Se descartara.\n", token);
+      else {
         g->producciones[i].ladoIzq = noTerminal;
         strcpy(g->producciones[i].ladoDer, token);
         printf("Produccion %d cargada: %c -> %s\n", i + 1, noTerminal, token);
@@ -222,8 +216,7 @@ void imprimirCuatrupla(gramatica *g) {
   printf("{");
   for (int i = 0; g->VN[i] != '\0'; i++) {
     printf("%c", g->VN[i]);
-    if (g->VN[i + 1] != '\0')
-      printf(", ");
+    if (g->VN[i + 1] != '\0') printf(", ");
   }
   printf("}, ");
 
@@ -231,8 +224,7 @@ void imprimirCuatrupla(gramatica *g) {
   printf("{");
   for (int i = 0; g->VT[i] != '\0'; i++) {
     printf("%c", g->VT[i]);
-    if (g->VT[i + 1] != '\0')
-      printf(", ");
+    if (g->VT[i + 1] != '\0') printf(", ");
   }
   printf("}, ");
 
@@ -240,8 +232,7 @@ void imprimirCuatrupla(gramatica *g) {
   printf("{");
   for (int i = 0; i < 10 && g->producciones[i].ladoIzq != '\0'; i++) {
     printf("%c -> %s", g->producciones[i].ladoIzq, g->producciones[i].ladoDer);
-    if (g->producciones[i + 1].ladoIzq != '\0')
-      printf(", ");
+    if (g->producciones[i + 1].ladoIzq != '\0') printf(", ");
   }
   printf("}, ");
 
@@ -253,9 +244,7 @@ void imprimirCuatrupla(gramatica *g) {
 int contarProducciones(gramatica *g) {
   int contador = 0;
   for (int i = 0; i < MAX_PRODUCCIONES; i++) {
-    if (g->producciones[i].ladoIzq != '\0') {
-      contador++;
-    }
+    if (g->producciones[i].ladoIzq != '\0') contador++;
   }
 
   return contador;
@@ -269,13 +258,28 @@ int produccionEncontrada (gramatica *g, char noTerminal, produccion *produc){
   while (intentos < maxIntentos) {
     int random = rand() % cantidadProducciones;
     *produc = g->producciones[random];
-    if (produc->ladoIzq == noTerminal) {
-        return 1; // Producción encontrada
-    }
+    if (produc->ladoIzq == noTerminal) return 1; // Producción encontrada
     intentos++;
   }
 
   return 0; // Produccion no encontrada
+}
+
+// Agrega una letra al principio o al final de la palabra, según forma regular
+void agregarLetra(char *palabra, char letra, int formaRegular) {
+  char nuevaPalabra[20];
+  if (formaRegular == 1) {
+    // Regular a la derecha -> agregar al final
+    int len = strlen(palabra);
+    palabra[len] = letra;
+    palabra[len + 1] = '\0';
+  } else {
+    // Regular a la izquierda -> agregar al principio
+    nuevaPalabra[0] = letra;
+    nuevaPalabra[1] = '\0';
+    strcat(nuevaPalabra, palabra);
+    strcpy(palabra, nuevaPalabra);
+  }
 }
 
 // Funcion para generar aleatoriamente palabras del lenguaje
@@ -306,33 +310,16 @@ void generarProduccion(gramatica *g) {
   while (strlen(produccion.ladoDer) != 1) {
     char letra[2] = {0};
 
-    if (g->formaRegular == 1) {
-      // Regular a la derecha: terminal en ladoDer[0], no terminal en ladoDer[1]
-      letra[0] = produccion.ladoDer[0];
-    } else {
-      // Regular a la izquierda: no terminal en ladoDer[0], terminal en ladoDer[1]
-      letra[0] = produccion.ladoDer[1];
-    }
-
+    letra[0] = (g->formaRegular == 1) ? produccion.ladoDer[0] : produccion.ladoDer[1]; // Regular a la derecha o izquierda
+      
     printf("Palabra Antes: %s\n", palabra);
     printf("Elemento Agregado: %c (por %c -> %s)\n", letra[0], produccion.ladoIzq, produccion.ladoDer);
-    if (g->formaRegular == 1) {
-      strcat(palabra, letra); // derecha -> agregas al final
-    } else {
-      // izquierda -> agregas al principio
-      char nuevaPalabra[20];
-      strcpy(nuevaPalabra, letra);
-      strcat(nuevaPalabra, palabra);
-      strcpy(palabra, nuevaPalabra);
-    }
-    printf("Palabra Despues: %s\n\n", palabra);
+    agregarLetra(palabra, letra[0], g->formaRegular); // Agrega la letra al principio o al final según la forma regular
+    printf("Palabra Despues: %s\n", palabra);
 
     char noTerminal;
-    if (g->formaRegular == 1) {
-      noTerminal = produccion.ladoDer[1];
-    } else {
-      noTerminal = produccion.ladoDer[0];
-    }
+
+    noTerminal = (g->formaRegular == 1) ? produccion.ladoDer[1] : produccion.ladoDer[0];
 
     if (!produccionEncontrada(g, noTerminal, &produccion)) {
       printf("Error: No se encontro una produccion valida para el no terminal '%c'.\n", noTerminal);
@@ -342,16 +329,8 @@ void generarProduccion(gramatica *g) {
 
   char letra[2] = {produccion.ladoDer[0], '\0'};
   printf("Palabra Antes: %s\n", palabra);
-  if (g->formaRegular == 1) {
-    strcat(palabra, letra); // derecha -> agregas al final
-  } else {
-    // izquierda -> agregas al principio
-    char nuevaPalabra[20];
-    strcpy(nuevaPalabra, letra);
-    strcat(nuevaPalabra, palabra);
-    strcpy(palabra, nuevaPalabra);
-  }
   printf("Elemento Agregado: %c (%c -> %s) \n", produccion.ladoDer[0], produccion.ladoIzq, produccion.ladoDer);
+  agregarLetra(palabra, letra[0], g->formaRegular); // Agrega la letra final
   printf("Palabra Despues: %s\n\n", palabra);
 
   printf("Palabra Final Generada: %s\n", palabra);
